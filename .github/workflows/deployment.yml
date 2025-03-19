@@ -27,7 +27,7 @@ jobs:
   #     with:
   #       age: '1 minute'
   build:
-    runs-on: [self-hosted, windows, X64, EAA-Capability-GitActions]
+    runs-on: self-hosted
     # needs: remove-old-artifacts 1
     steps:
     # Checkout code from this repo
