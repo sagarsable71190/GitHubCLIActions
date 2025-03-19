@@ -2,7 +2,7 @@ name: UiPath Deployment Pipeline
 
 on:
   push:
-    branches: [DEV]
+    branches: [main]
 jobs:
   print-details:
     runs-on: self-hosted
