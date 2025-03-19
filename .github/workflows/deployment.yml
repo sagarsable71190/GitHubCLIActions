@@ -81,7 +81,7 @@ jobs:
                               # Build and Deploy the Package
                               # package pack "C:\UiPath\Project\project.json" -o "C:\UiPath\Package"
                               & "C:\\uipathcli\\lib\\net461\\uipcli.exe" package pack "$jsonFilePath" -o "${{ github.workspace }}\$subfolder" -v $VERSION -l en-US
-                              & "C:\\uipathcli\\lib\\net461\\uipcli.exe" package deploy "${{ github.workspace }}\$($Name).$VERSION.nupkg" "https://staging.uipath.com/uipathtamindia/SagarSable/orchestrator_" "${{ secrets.UAT_TENANT_NAME }}" -A "${{ secrets.ACCOUNT_NAME }}" -I "${{ secrets.OAUTH_CLIENT_ID }}" -S "${{ secrets.OAUTH_CLIENT_SECRET }}" -o "SampleTestDeploy" --applicationScope "${{ secrets.OAUTH_CLIENT_SCOPES }}"
+                              & "C:\\uipathcli\\lib\\net461\\uipcli.exe" package deploy "${{ github.workspace }}\$($Name).$VERSION.nupkg" "https://staging.uipath.com/uipathtamindia/SagarSable/orchestrator_" "${{ secrets.UAT_TENANT_NAME }}" -A "${{ secrets.ACCOUNT_NAME }}" -I "${{ secrets.OAUTH_CLIENT_ID }}" -S "${{ secrets.OAUTH_CLIENT_SECRET }}" --applicationScope "${{ secrets.OAUTH_CLIENT_SCOPES }}"
                           } 
                   } 
                   }
