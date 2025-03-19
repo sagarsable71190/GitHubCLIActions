@@ -53,7 +53,7 @@ jobs:
     - name: Pack and Deploy
       run: |
                   $rootRepoPath = "${{ github.workspace }}"
-                  $cicdJsonPath = "${{ github.workspace }}\CICDConfiguration.json"
+                  $cicdJsonPath = "${{ github.workspace }}\project.json"
                   
                   # Read the subfolder names from cicd.json
                   $cicdJsonContent = Get-Content -Path $cicdJsonPath | ConvertFrom-Json
