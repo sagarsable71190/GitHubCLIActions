@@ -1,0 +1,89 @@
+name: UiPath Deployment Pipeline 
+
+on:
+  push:
+    branches: [DEV] # buvika_wip, wip_123, varshitha_wip ] 
+  pull_request:
+    branches: [PROD] #buvika_wip, varshitha_wip] 
+jobs:
+  print-details:
+    runs-on: [self-hosted, windows, X64, EAA-Capability-GitActions]
+    steps:
+      - name: echo-default-env-variables
+        run: |
+          echo "Home: ${HOME}"
+          echo "GITHUB_WORKFLOW: ${GITHUB_WORKFLOW}"
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "GITHUB_ACTOR: ${GITHUB_ACTOR}"
+          echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
+          echo "GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}"
+          echo "GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
+          echo "GITHUB_SHA: ${GITHUB_SHA}"
+          echo "GITHUB_REF: ${GITHUB_REF}"
+  # remove-old-artifacts:
+  #   runs-on: [self-hosted, windows, X64, ART-EAA-GithubAction-WindowsX64]
+  #   timeout-minutes: 10
+  #   steps:
+  #   - name: Remove old artifacts 
+  #     uses: c-hive/gha-remove-artifacts@v1 
+  #     with:
+  #       age: '1 minute'
+  build:
+    runs-on: [self-hosted, windows, X64, EAA-Capability-GitActions]
+    # needs: remove-old-artifacts 1
+    steps:
+    # Checkout code from this repo
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    # Facilitate the UiPath CLI in the github artifacts 
+    # installing uipath cli only if it doesn't exist
+    - name: Get UiPath CLI
+      run: |
+              if (-Not (Test-Path "D:\\uipathcli\\lib\\net461\\uipcli.exe")) {
+                  New-Item -Path "D:\\" -ItemType "directory" -Name "uipathcli";
+                  Invoke-WebRequest "https://www.myget.org/F/uipath-dev/api/v2/package/UiPath.CLI/1.0.7985.19721" -OutFile "D:\\uipathcli\\cli.zip";
+                  Expand-Archive -LiteralPath "D:\\uipathcli\\cli.zip" -DestinationPath "D:\\uipathcli";
+              } else {
+                  Write-Output "UiPath CLI already exists";
+              }
+    
+    # Static analyzer for Development Branch
+    # - name: Analyze project 
+    #   run: uipcli analyze --project-path <path-to-your-project>
+      
+    # Use uipcli to package and deploy (for each project.json found))                           
+    - name: Pack and Deploy
+      run: |
+                  $rootRepoPath = "${{ github.workspace }}"
+                  $cicdJsonPath = "${{ github.workspace }}\CICDConfiguration.json"
+                  
+                  # Read the subfolder names from cicd.json
+                  $cicdJsonContent = Get-Content -Path $cicdJsonPath | ConvertFrom-Json
+                  $subfoldersToCheck = $cicdJsonContent.DEV.Projects | ForEach-Object { $_.Name }
+                  
+                  foreach ($subfolder in $subfoldersToCheck) {
+                      $subfolderPath = Join-Path -Path $rootRepoPath -ChildPath $subfolder
+                      $jsonFilePath = Join-Path -Path $subfolderPath -ChildPath "project.json"
+                      
+                      if (Test-Path -Path $subfolderPath -PathType Container) {
+                          if (Test-Path -Path $jsonFilePath -PathType Leaf) {
+                              # Get some data from the project.json for package naming
+                              $json = Get-Content -Path $jsonFilePath | Out-String | ConvertFrom-Json
+                              $foo = $json.projectVersion
+                              $Name = $json.name
+                              echo "::set-output name=PATH::$package"
+                              echo $foo
+                              $v = [version] "$foo"
+                              $newversion = "{0}.{1}.{2}.{3}" -f $v.Major, $v.Minor, ($v.Build), "${{ github.run_number }}"
+                              $VERSION = [string]$newversion
+                              echo $VERSION
+                              echo $Name
+                              echo "${{ github.workspace }}\$Name.$VERSION.nupkg"
+                              
+                              # Build and Deploy the Package
+                              # package pack "C:\UiPath\Project\project.json" -o "C:\UiPath\Package"
+                              & "D:\\uipathcli\\lib\\net461\\uipcli.exe" package pack "$jsonFilePath" -o "${{ github.workspace }}\$subfolder" -v $VERSION -l en-US
+                              & "D:\\uipathcli\\lib\\net461\\uipcli.exe" package deploy "${{ github.workspace }}\$($Name).$VERSION.nupkg" "https://robo-sandbox-orchestrator.optum.com" "${{ secrets.UAT_TENANT_NAME }}" -A "${{ secrets.ACCOUNT_NAME }}" -I "${{ secrets.OAUTH_CLIENT_ID }}" -S "${{ secrets.OAUTH_CLIENT_SECRET }}" -o "SampleTestDeploy" --applicationScope "${{ secrets.OAUTH_CLIENT_SCOPES }}"
+                          } 
+                  } 
+                  }
