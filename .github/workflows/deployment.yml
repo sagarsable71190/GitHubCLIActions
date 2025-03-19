@@ -2,12 +2,10 @@ name: UiPath Deployment Pipeline
 
 on:
   push:
-    branches: [DEV] # buvika_wip, wip_123, varshitha_wip ] 
-  pull_request:
-    branches: [PROD] #buvika_wip, varshitha_wip] 
+    branches: [DEV]
 jobs:
   print-details:
-    runs-on: [self-hosted, windows, X64, EAA-Capability-GitActions]
+    runs-on: self-hosted
     steps:
       - name: echo-default-env-variables
         run: |
@@ -39,10 +37,10 @@ jobs:
     # installing uipath cli only if it doesn't exist
     - name: Get UiPath CLI
       run: |
-              if (-Not (Test-Path "D:\\uipathcli\\lib\\net461\\uipcli.exe")) {
-                  New-Item -Path "D:\\" -ItemType "directory" -Name "uipathcli";
-                  Invoke-WebRequest "https://www.myget.org/F/uipath-dev/api/v2/package/UiPath.CLI/1.0.7985.19721" -OutFile "D:\\uipathcli\\cli.zip";
-                  Expand-Archive -LiteralPath "D:\\uipathcli\\cli.zip" -DestinationPath "D:\\uipathcli";
+              if (-Not (Test-Path "C:\\uipathcli\\lib\\net461\\uipcli.exe")) {
+                  New-Item -Path "C:\\" -ItemType "directory" -Name "uipathcli";
+                  Invoke-WebRequest "https://www.myget.org/F/uipath-dev/api/v2/package/UiPath.CLI/1.0.7985.19721" -OutFile "C:\\uipathcli\\cli.zip";
+                  Expand-Archive -LiteralPath "C:\\uipathcli\\cli.zip" -DestinationPath "C:\\uipathcli";
               } else {
                   Write-Output "UiPath CLI already exists";
               }
@@ -82,8 +80,8 @@ jobs:
                               
                               # Build and Deploy the Package
                               # package pack "C:\UiPath\Project\project.json" -o "C:\UiPath\Package"
-                              & "D:\\uipathcli\\lib\\net461\\uipcli.exe" package pack "$jsonFilePath" -o "${{ github.workspace }}\$subfolder" -v $VERSION -l en-US
-                              & "D:\\uipathcli\\lib\\net461\\uipcli.exe" package deploy "${{ github.workspace }}\$($Name).$VERSION.nupkg" "https://robo-sandbox-orchestrator.optum.com" "${{ secrets.UAT_TENANT_NAME }}" -A "${{ secrets.ACCOUNT_NAME }}" -I "${{ secrets.OAUTH_CLIENT_ID }}" -S "${{ secrets.OAUTH_CLIENT_SECRET }}" -o "SampleTestDeploy" --applicationScope "${{ secrets.OAUTH_CLIENT_SCOPES }}"
+                              & "C:\\uipathcli\\lib\\net461\\uipcli.exe" package pack "$jsonFilePath" -o "${{ github.workspace }}\$subfolder" -v $VERSION -l en-US
+                              & "C:\\uipathcli\\lib\\net461\\uipcli.exe" package deploy "${{ github.workspace }}\$($Name).$VERSION.nupkg" "https://robo-sandbox-orchestrator.optum.com" "${{ secrets.UAT_TENANT_NAME }}" -A "${{ secrets.ACCOUNT_NAME }}" -I "${{ secrets.OAUTH_CLIENT_ID }}" -S "${{ secrets.OAUTH_CLIENT_SECRET }}" -o "SampleTestDeploy" --applicationScope "${{ secrets.OAUTH_CLIENT_SCOPES }}"
                           } 
                   } 
                   }
